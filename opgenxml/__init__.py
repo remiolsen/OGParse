@@ -29,8 +29,6 @@ class OpGenMapPlacement():
     def __init__(self, xmlfile, rs_map):
         self.xmlroot = ET.parse(xmlfile).getroot()
         self.align_chunks = {}
-        self.map_intervals = IntervalTree()
-        self.fasta_intervals = IntervalTree()
         self.map_fasta = IntervalTree()
         self.fasta_map = IntervalTree()
         self._get_chunks(rs_map)
@@ -56,8 +54,6 @@ class OpGenMapPlacement():
                 orientation = "-"
             else:
                 orientation = "+"
-            self.map_intervals[coords_S1[0]:coords_S1[1]] = (S1,S2)
-            self.fasta_intervals[coords_S2[0]:coords_S2[1]] = S2
 
             self.map_fasta[coords_S1[0]:coords_S1[1]] = Interval(coords_S2[0], coords_S2[1], (S2, orientation))
             self.fasta_map[coords_S2[0]:coords_S2[1]] = Interval(coords_S1[0], coords_S1[1], (S2, orientation))

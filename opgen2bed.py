@@ -44,29 +44,32 @@ else:
     except IOError as e:
         print "Something wrong with input bed file: %s" % (e)
         exit()
-    
+    #bin the contigs by map coordinates
     fmap = {}
     tree = sorted(placements.fasta_map, key=lambda x: x[2])
     for k, g in groupby(tree, key=lambda x: x[2]):
         iv = list(g)
         if fmap.has_key(k.data):
             fmap[k.data].update(iv)
-            pass
         else:
             fmap[k.data] = IntervalTree(iv)
     #Bin the bed coordiantes
     subbeds = {}
     btree = sorted(bedintervals, key=lambda x: x[2])
     for k, g in groupby(btree, key=lambda x: x[2]):
-        subbeds[k[0]] = IntervalTree(set(g))
+        if subbeds.has_key(k[0]):
+            subbeds[k[0]].update(list(g))
+        else:
+            subbeds[k[0]] = IntervalTree(list(g))
 
     #Find features that overlap with placed contigs
-    for fasta_key, interval in fmap.iteritems():
+    for fasta_key, finterval in fmap.iteritems():
 
         for bedline in subbeds[fasta_key[0]]:
             feat_start = bedline.begin
             feat_end = bedline.end
-            overlaps = interval[feat_start:feat_end]
+            overlaps = finterval[feat_start:feat_end]
+
             # We found overlaps, the feature need to be translated to map-coordinates
             if overlaps:
                 ctg = list(overlaps)[0]
@@ -78,18 +81,19 @@ else:
                     feat_map_start = map_start + feat_start - fa_start
                     feat_map_end = map_start + feat_end - fa_start
                 else:
-                    feat_map_start = map_end - feat_start - fa_start
-                    feat_map_end = map_end - feat_end - fa_start
+                    feat_map_end = map_end - (feat_start - fa_start)
+                    feat_map_start = map_end - (feat_end - fa_start)
 
-                bed_line =  "%s\t%s\t%s\t%s\t%s" % (
-                        fasta_key[0], feat_map_start, feat_map_end, bedline.data[1], fasta_key[1])
+                bed_line =  "%s\t%s\t%s\t%s\t%s\t%s" % (
+                        tname, feat_map_start, feat_map_end, bedline.data[1], 999, fasta_key[1])
                 bed_out.append(bed_line)
 
 # We're done, writing to file or to stdout
+bed_out = sorted(bed_out, key=lambda x: int(x.split()[1]))
 if args.bed is None:
     for out_line in bed_out:
         print out_line
 else:
-    with open(args.bed) as bout:
-        bout.writelines(bed_out)
+    with open(args.bed, "w") as bout:
+        bout.write("\n".join(bed_out))
 
