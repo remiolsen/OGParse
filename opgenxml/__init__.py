@@ -47,13 +47,6 @@ class OpGenMapPlacement():
             end_S1 = int(chunks[-1]["S1"])
             end_S2 = int(chunks[-1]["S2"])
 
-            #if S2 in rs_map.notinsilico:
-            #    tmp = S1
-            #    S1 = S2
-            #    S2 = tmp
-            #elif S1 not in rs_map.notinsilico:
-            #    next()
-
             coords_S1 = rs_map.fragment_coords(S1, start_S1, end_S1)
             coords_S2 = rs_map.fragment_coords(S2, start_S2, end_S2)
             if not self.align_chunks.has_key((S1,S2)):
