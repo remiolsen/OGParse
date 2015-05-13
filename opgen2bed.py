@@ -15,23 +15,29 @@ opmaps = OpGenRestrictionMap(args.xml)
 placements = OpGenMapPlacement(args.xml, opmaps)
 bed_out = []
 
-#Target (opgen map) specific information
-tname = placements.align_chunks.keys()[0][0]
-tfrags = opmaps.fragments[tname]
-tchunks = (int(tfrags[0]["I"]), int(tfrags[-1]["I"]))
-tsize = opmaps.fragment_coords(tname, min(tchunks), max(tchunks))[1]
+#        tname = placements.align_chunks.keys()[0][0]
+#        tfrags = opmaps.fragments[tname]
+#        tchunks = (int(tfrags[0]["I"]), int(tfrags[-1]["I"]))
+#        tsize = opmaps.fragment_coords(tname, min(tchunks), max(tchunks))[1]
+
 
 #Annotate regions of fasta file as placed on optical maps
 if args.bed_in is None:
     for interval in sorted(placements.map_fasta.items()):
+        #Target (opgen map) specific information
+        tname = interval.data.data[2]
+        tfrags = opmaps.fragments[tname]
+        tchunks = (int(tfrags[0]["I"]), int(tfrags[-1]["I"]))
+        tsize = opmaps.fragment_coords(tname, min(tchunks), max(tchunks))[1]
         tstart = interval.begin
         tend = interval.end
 
         #Query (in-silico digested sequence) specific information
         q = interval.data
         qname = q.data[0]
-        qstrand = q.data[1]
-        bedline = "%s\t%s\t%s\t%s\t%s\t%s" % (tname, tstart, tend, qname, 999, qstrand)
+        strand = q.data[1]
+        bedline = "%s\t%s\t%s\t%s\t%s\t%s" % (tname, tstart, tend, qname, 999, strand)
+
         bed_out.append(bedline)
 # We are converting bed coordinates to optical map coordintes
 else:
@@ -89,7 +95,9 @@ else:
                 bed_out.append(bed_line)
 
 # We're done, writing to file or to stdout
+
 bed_out = sorted(bed_out, key=lambda x: int(x.split()[1]))
+bed_out = sorted(bed_out, key=lambda x: x.split()[0])
 if args.bed is None:
     for out_line in bed_out:
         print out_line

@@ -8,12 +8,15 @@ class OpGenRestrictionMap():
     def __init__(self, xmlfile):
         self.xmlroot = ET.parse(xmlfile).getroot()
         self.fragments = {}
+        self.notinsilico = []
         self._get_fragments()
 
     def _get_fragments(self):
         for rmap in self.xmlroot.iter('RESTRICTION_MAP'):
             mapID = rmap.get('ID').strip()
             self.fragments[mapID] = [frag.attrib for frag in rmap.iter('F')]
+            if rmap.get('INSILICO') == 'false':
+                self.notinsilico.append(mapID)
 
 
     def fragment_coords(self, ID, start, end):
@@ -43,6 +46,14 @@ class OpGenMapPlacement():
             start_S2 = int(chunks[0]["S2"])
             end_S1 = int(chunks[-1]["S1"])
             end_S2 = int(chunks[-1]["S2"])
+
+            #if S2 in rs_map.notinsilico:
+            #    tmp = S1
+            #    S1 = S2
+            #    S2 = tmp
+            #elif S1 not in rs_map.notinsilico:
+            #    next()
+
             coords_S1 = rs_map.fragment_coords(S1, start_S1, end_S1)
             coords_S2 = rs_map.fragment_coords(S2, start_S2, end_S2)
             if not self.align_chunks.has_key((S1,S2)):
@@ -50,11 +61,15 @@ class OpGenMapPlacement():
             else:
                 self.align_chunks[(S1,S2)][coords_S1] = chunks
             
-            if start_S2 > end_S2:
-                orientation = "-"
+            if start_S1 > end_S1:
+                orientationS1 = "-"
             else:
-                orientation = "+"
+                orientationS1 = "+"
+            if start_S2 > end_S2:
+                orientationS2 = "-"
+            else:
+                orientationS2 = "+"
 
-            self.map_fasta[coords_S1[0]:coords_S1[1]] = Interval(coords_S2[0], coords_S2[1], (S2, orientation))
-            self.fasta_map[coords_S2[0]:coords_S2[1]] = Interval(coords_S1[0], coords_S1[1], (S2, orientation))
+            self.map_fasta[coords_S1[0]:coords_S1[1]] = Interval(coords_S2[0], coords_S2[1], (S2, orientationS2, S1, orientationS1))
+            self.fasta_map[coords_S2[0]:coords_S2[1]] = Interval(coords_S1[0], coords_S1[1], (S2, orientationS2, S1, orientationS1))
 
